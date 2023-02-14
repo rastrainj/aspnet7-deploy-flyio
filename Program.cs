@@ -1,3 +1,7 @@
+using Data;
+using Features.Users.Requests;
+using Microsoft.EntityFrameworkCore;
+
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
@@ -7,10 +11,12 @@ builder.Services.AddSwaggerGen();
 
 builder.Services.AddCors();
 
+builder.Services.AddDbContext<DataDbContext>();
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
-if (app.Environment.IsDevelopment())
+if (app.Environment.IsDevelopment() || app.Environment.EnvironmentName == "Docker")
 {
     app.UseSwagger();
     app.UseSwaggerUI();
@@ -21,29 +27,25 @@ app.UseCors(policy => policy
     .AllowAnyMethod()
     .AllowAnyOrigin());
 
-var summaries = new[]
+app.MapGet("/users", async (DataDbContext context, CancellationToken cancellationToken) =>
 {
-    "Freezing", "Bracing", "Chilly", "Cool", "Mild", "Warm", "Balmy", "Hot", "Sweltering", "Scorching"
-};
-
-app.MapGet("/weatherforecast", () =>
-{
-    var forecast =  Enumerable.Range(1, 5).Select(index =>
-        new WeatherForecast
-        (
-            DateOnly.FromDateTime(DateTime.Now.AddDays(index)),
-            Random.Shared.Next(-20, 55),
-            summaries[Random.Shared.Next(summaries.Length)]
-        ))
-        .ToArray();
-    return forecast;
+    return await context.Users.ToListAsync(cancellationToken);
 })
-.WithName("GetWeatherForecast")
+.WithName("GetAllUsers")
 .WithOpenApi();
 
-app.Run();
-
-record WeatherForecast(DateOnly Date, int TemperatureC, string? Summary)
+app.MapPost("/users", async (AddUserRequest addUserRequest, DataDbContext context, CancellationToken cancellationToken) =>
 {
-    public int TemperatureF => 32 + (int)(TemperatureC / 0.5556);
-}
+    await context.Users.AddAsync(new() { Title = addUserRequest.Title }, cancellationToken);
+    await context.SaveChangesAsync(cancellationToken);
+})
+.WithName("AddUser")
+.WithOpenApi();
+
+using var scope = app.Services.CreateScope();
+var dbContext = scope.ServiceProvider.GetRequiredService<DataDbContext>();
+
+// Here is the migration executed
+dbContext.Database.Migrate();
+
+app.Run();

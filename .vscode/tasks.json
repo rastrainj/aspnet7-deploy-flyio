@@ -76,7 +76,11 @@
             "dependsOn": [
                 "docker-build: debug"
             ],
-            "dockerRun": {},
+            "dockerRun": {
+                "env": {
+                    "ASPNETCORE_ENVIRONMENT": "Docker"
+                }
+            },
             "netCore": {
                 "appProject": "${workspaceFolder}/aspnet7-deploy-flyio.csproj",
                 "enableDebugging": true
