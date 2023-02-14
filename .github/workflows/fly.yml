@@ -14,6 +14,6 @@ jobs:
       - uses: superfly/flyctl-actions/setup-flyctl@master
       - run: |
           flyctl secrets set -a rastrainj-aspnet7-demo \
-          ConnectionStrings__PostgresDatabase=${{ secrets.PG_CONNECTION_STRING }} \
+          ConnectionStrings__PostgresDatabase="${{ secrets.PG_CONNECTION_STRING }}" \
           ASPNETCORE_ENVIRONMENT=Docker
       - run: flyctl deploy --remote-only
