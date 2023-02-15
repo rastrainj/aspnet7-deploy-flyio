@@ -38,6 +38,7 @@ app.MapPost("/users", async (AddUserRequest addUserRequest, DataDbContext contex
 {
     await context.Users.AddAsync(new() { Title = addUserRequest.Title }, cancellationToken);
     await context.SaveChangesAsync(cancellationToken);
+    return Results.NoContent();
 })
 .WithName("AddUser")
 .WithOpenApi();
